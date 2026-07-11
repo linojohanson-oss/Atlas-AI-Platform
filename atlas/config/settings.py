@@ -10,7 +10,7 @@ class AtlasSettings:
     """Configuración central de Atlas AI Platform."""
 
     app_name: str = "Atlas AI Platform"
-    version: str = "0.5.0"
+    version: str = "0.7.0"
     environment: str = "development"
 
     base_dir: Path = BASE_DIR

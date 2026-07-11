@@ -1,14 +1,17 @@
 ﻿from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from atlas.agents import GeneralAgent
+from atlas.agents import GeneralAgent, PlannerAgent
 from atlas.config.settings import AtlasSettings, settings
 from atlas.kernel.agent_manager import AgentManager
+from atlas.kernel.capability_manager import CapabilityManager
 from atlas.kernel.event_bus import EventBus
 from atlas.kernel.llm_manager import LLMManager
 from atlas.kernel.registry import ComponentRegistry
+from atlas.kernel.tool_manager import ToolManager
 from atlas.llm import MockLLMProvider
 from atlas.memory.execution_memory import ExecutionMemory
+from atlas.tools import CalculatorTool, ExcelTool, FileInfoTool
 from atlas.utils.logger import logger
 
 
@@ -16,8 +19,8 @@ class AtlasKernel:
     """
     Núcleo principal de Atlas AI Platform.
 
-    Coordina los componentes centrales del sistema:
-    registro, eventos, agentes, proveedores LLM y memoria.
+    Coordina componentes, agentes, proveedores LLM,
+    herramientas, capacidades, eventos y memoria.
     """
 
     def __init__(
@@ -28,8 +31,22 @@ class AtlasKernel:
 
         self.registry = ComponentRegistry()
         self.event_bus = EventBus()
-        self.llm_manager = LLMManager(self.event_bus)
-        self.agent_manager = AgentManager(self.event_bus)
+
+        self.capability_manager = CapabilityManager(
+            self.event_bus
+        )
+
+        self.llm_manager = LLMManager(
+            self.event_bus
+        )
+
+        self.tool_manager = ToolManager(
+            self.event_bus
+        )
+
+        self.agent_manager = AgentManager(
+            self.event_bus
+        )
 
         self.execution_memory = ExecutionMemory(
             self.settings.memory_dir
@@ -44,7 +61,7 @@ class AtlasKernel:
         """
         if self.started:
             logger.warning(
-                "Atlas Kernel ya se encuentra iniciado."
+                "Atlas Kernel ya está iniciado."
             )
             return
 
@@ -59,7 +76,9 @@ class AtlasKernel:
         )
 
         self._register_core_components()
-        self._register_default_llm_providers()
+        self._register_default_llm()
+        self._register_default_tools()
+        self._register_default_capabilities()
         self._register_default_agents()
 
         self.started = True
@@ -81,7 +100,7 @@ class AtlasKernel:
 
     def _register_core_components(self) -> None:
         """
-        Registra los componentes internos del Kernel.
+        Registra los componentes centrales.
         """
         self.registry.register(
             "configuration",
@@ -99,8 +118,18 @@ class AtlasKernel:
         )
 
         self.registry.register(
+            "capability_manager",
+            self.capability_manager,
+        )
+
+        self.registry.register(
             "llm_manager",
             self.llm_manager,
+        )
+
+        self.registry.register(
+            "tool_manager",
+            self.tool_manager,
         )
 
         self.registry.register(
@@ -118,9 +147,9 @@ class AtlasKernel:
             self.registry.count(),
         )
 
-    def _register_default_llm_providers(self) -> None:
+    def _register_default_llm(self) -> None:
         """
-        Registra los proveedores LLM iniciales.
+        Registra los proveedores LLM predeterminados.
         """
         self.llm_manager.register(
             MockLLMProvider(),
@@ -132,12 +161,67 @@ class AtlasKernel:
             self.llm_manager.count(),
         )
 
+    def _register_default_tools(self) -> None:
+        """
+        Registra las herramientas predeterminadas.
+        """
+        self.tool_manager.register(
+            CalculatorTool()
+        )
+
+        self.tool_manager.register(
+            FileInfoTool()
+        )
+
+        self.tool_manager.register(
+            ExcelTool()
+        )
+
+        logger.info(
+            "Herramientas registradas: %s",
+            self.tool_manager.count(),
+        )
+
+    def _register_default_capabilities(self) -> None:
+        """
+        Registra las capacidades predeterminadas.
+        """
+        self.capability_manager.register(
+            "mathematics",
+            "calculator",
+        )
+
+        self.capability_manager.register(
+            "filesystem",
+            "file-info",
+        )
+
+        self.capability_manager.register(
+            "spreadsheet",
+            "excel",
+        )
+
+        logger.info(
+            "Capacidades registradas: %s",
+            self.capability_manager.count(),
+        )
+
     def _register_default_agents(self) -> None:
         """
-        Registra los agentes iniciales.
+        Registra los agentes predeterminados.
         """
         self.agent_manager.register(
-            GeneralAgent(self.llm_manager)
+            PlannerAgent(
+                llm_manager=self.llm_manager,
+                tool_manager=self.tool_manager,
+                capability_manager=self.capability_manager,
+            )
+        )
+
+        self.agent_manager.register(
+            GeneralAgent(
+                self.llm_manager
+            )
         )
 
         logger.info(
@@ -148,27 +232,36 @@ class AtlasKernel:
     def execute(
         self,
         task: str,
-        agent_name: str = "general-agent",
-    ) -> Dict[str, object]:
+        agent_name: str = "planner-agent",
+    ) -> Dict[str, Any]:
         """
-        Ejecuta una tarea utilizando un agente
-        y guarda automáticamente el resultado.
+        Ejecuta una tarea mediante un agente
+        y guarda el resultado en memoria.
         """
-        if not self.started:
-            raise RuntimeError(
-                "Atlas Kernel debe estar iniciado."
+        self._ensure_started()
+
+        normalized_task = task.strip()
+
+        if not normalized_task:
+            raise ValueError(
+                "La tarea no puede estar vacía."
             )
 
         result = self.agent_manager.execute(
             agent_name=agent_name,
-            task=task,
+            task=normalized_task,
         )
 
         memory_record = self.execution_memory.save(
-            task=task,
+            task=normalized_task,
             result=result,
             metadata={
+                "execution_type": "agent",
                 "agent": agent_name,
+                "intent": result.get("intent"),
+                "selected_tool": result.get(
+                    "selected_tool"
+                ),
                 "provider": result.get("provider"),
                 "model": result.get("model"),
             },
@@ -181,37 +274,98 @@ class AtlasKernel:
 
         return result
 
-    def stop(self) -> None:
+    def execute_tool(
+        self,
+        tool_name: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
-        Detiene Atlas AI Platform.
+        Ejecuta directamente una herramienta.
         """
-        if not self.started:
-            logger.warning(
-                "Atlas Kernel no está iniciado."
-            )
-            return
+        self._ensure_started()
 
-        self.event_bus.publish(
-            "kernel.stopping",
-            {
-                "application": self.settings.app_name,
-                "version": self.settings.version,
+        normalized_tool_name = tool_name.strip().lower()
+
+        if not normalized_tool_name:
+            raise ValueError(
+                "El nombre de la herramienta no puede estar vacío."
+            )
+
+        result = self.tool_manager.execute(
+            tool_name=normalized_tool_name,
+            **kwargs,
+        )
+
+        memory_record = self.execution_memory.save(
+            task=(
+                f"Ejecutar herramienta '{normalized_tool_name}' "
+                f"con argumentos {kwargs}"
+            ),
+            result=result,
+            metadata={
+                "execution_type": "tool",
+                "tool": normalized_tool_name,
             },
         )
 
-        logger.info(
-            "Deteniendo Atlas AI Platform..."
+        self.event_bus.publish(
+            "memory.execution.saved",
+            memory_record,
         )
 
-        self.started = False
+        return result
 
-        logger.info(
-            "Atlas Kernel detenido correctamente."
-        )
-
-    def status(self) -> Dict[str, object]:
+    def execute_capability(
+        self,
+        capability_name: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
-        Devuelve el estado actual del Kernel.
+        Resuelve una capacidad y ejecuta su herramienta.
+        """
+        self._ensure_started()
+
+        normalized_capability = (
+            capability_name.strip().lower()
+        )
+
+        if not normalized_capability:
+            raise ValueError(
+                "El nombre de la capacidad no puede estar vacío."
+            )
+
+        tool_name = self.capability_manager.resolve(
+            normalized_capability
+        )
+
+        result = self.tool_manager.execute(
+            tool_name=tool_name,
+            **kwargs,
+        )
+
+        memory_record = self.execution_memory.save(
+            task=(
+                f"Ejecutar capacidad '{normalized_capability}' "
+                f"mediante '{tool_name}' con argumentos {kwargs}"
+            ),
+            result=result,
+            metadata={
+                "execution_type": "capability",
+                "capability": normalized_capability,
+                "tool": tool_name,
+            },
+        )
+
+        self.event_bus.publish(
+            "memory.execution.saved",
+            memory_record,
+        )
+
+        return result
+
+    def status(self) -> Dict[str, Any]:
+        """
+        Devuelve el estado completo del Kernel.
         """
         return {
             "application": self.settings.app_name,
@@ -232,7 +386,91 @@ class AtlasKernel:
             "default_llm_provider": (
                 self.llm_manager.default_provider
             ),
-            "stored_executions": self.execution_memory.count(),
+            "registered_tools": self.tool_manager.count(),
+            "tool_names": self.tool_manager.list_names(),
+            "registered_capabilities": (
+                self.capability_manager.count()
+            ),
+            "capability_names": (
+                self.capability_manager.list_names()
+            ),
+            "capabilities": (
+                self.capability_manager.list_capabilities()
+            ),
+            "stored_executions": (
+                self.execution_memory.count()
+            ),
             "event_types": self.event_bus.count_events(),
-            "event_listeners": self.event_bus.count_listeners(),
+            "event_listeners": (
+                self.event_bus.count_listeners()
+            ),
         }
+
+    def get_execution_history(
+        self,
+        limit: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Devuelve el historial de ejecuciones.
+        """
+        return self.execution_memory.get_history(
+            limit=limit
+        )
+
+    def get_last_execution(
+        self,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Devuelve la última ejecución.
+        """
+        return self.execution_memory.get_last()
+
+    def stop(self) -> None:
+        """
+        Detiene Atlas AI Platform.
+        """
+        if not self.started:
+            logger.warning(
+                "Atlas Kernel no está iniciado."
+            )
+            return
+
+        stopped_at = datetime.now()
+
+        self.event_bus.publish(
+            "kernel.stopping",
+            {
+                "application": self.settings.app_name,
+                "version": self.settings.version,
+                "stopped_at": stopped_at.isoformat(),
+            },
+        )
+
+        logger.info(
+            "Deteniendo Atlas AI Platform..."
+        )
+
+        self.started = False
+
+        self.event_bus.publish(
+            "kernel.stopped",
+            {
+                "application": self.settings.app_name,
+                "version": self.settings.version,
+                "stopped_at": stopped_at.isoformat(),
+            },
+        )
+
+        logger.info(
+            "Atlas Kernel detenido correctamente."
+        )
+
+    def _ensure_started(self) -> None:
+        """
+        Verifica que el Kernel esté iniciado.
+        """
+        if not self.started:
+            raise RuntimeError(
+                "Atlas Kernel debe estar iniciado "
+                "antes de ejecutar tareas."
+            )
