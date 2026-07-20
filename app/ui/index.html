@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Atlas AI Platform</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #e8edf7;
+            background:
+                radial-gradient(circle at top left, #172554, transparent 40%),
+                linear-gradient(135deg, #080d1c, #111936);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(8, 13, 28, 0.75);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            box-shadow: 0 0 25px rgba(79, 70, 229, 0.45);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .brand p {
+            margin: 4px 0 0;
+            color: #9ca9c7;
+            font-size: 13px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #bbf7d0;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 12px #22c55e;
+        }
+
+        .container {
+            width: min(1100px, calc(100% - 40px));
+            margin: 45px auto;
+        }
+
+        .hero {
+            margin-bottom: 28px;
+        }
+
+        .hero h2 {
+            margin: 0 0 10px;
+            font-size: clamp(30px, 5vw, 50px);
+            line-height: 1.1;
+        }
+
+        .hero span {
+            background: linear-gradient(90deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .hero p {
+            max-width: 700px;
+            color: #aeb9d3;
+            font-size: 17px;
+            line-height: 1.6;
+        }
+
+        .panel {
+            padding: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 22px;
+            background: rgba(17, 25, 54, 0.80);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.30);
+            backdrop-filter: blur(16px);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #dbe5ff;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 135px;
+            padding: 18px;
+            resize: vertical;
+            color: #f8fafc;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.5;
+            border: 1px solid #33436d;
+            border-radius: 15px;
+            outline: none;
+            background: #0c132b;
+            transition: 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        button {
+            min-width: 150px;
+            padding: 13px 22px;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.60;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .info-card {
+            padding: 17px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            background: #0c132b;
+        }
+
+        .info-card .title {
+            color: #8fa0c3;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-card .value {
+            margin-top: 8px;
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .output-card {
+            padding: 20px;
+            border-left: 4px solid #60a5fa;
+            border-radius: 12px;
+            background: #0c132b;
+        }
+
+        .output-card h3 {
+            margin: 0 0 12px;
+            color: #93c5fd;
+        }
+
+        .output {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 18px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            color: #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 12px;
+            background: rgba(127, 29, 29, 0.35);
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7180a3;
+            font-size: 13px;
+        }
+
+        @media (max-width: 750px) {
+            .header {
+                padding: 18px 20px;
+            }
+
+            .status {
+                display: none;
+            }
+
+            .container {
+                margin-top: 30px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                display: block;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="brand">
+        <div class="logo">A</div>
+
+        <div>
+            <h1>Atlas AI Platform</h1>
+            <p>Intelligent Agent Operating System</p>
+        </div>
+    </div>
+
+    <div class="status">
+        <div class="status-dot"></div>
+        <span>Atlas Kernel Online</span>
+    </div>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <h2>
+            Tu plataforma de agentes
+            <span>inteligentes</span>
+        </h2>
+
+        <p>
+            Enviá una instrucción y Atlas seleccionará automáticamente
+            el agente, la capacidad y la herramienta apropiada.
+        </p>
+    </section>
+
+    <section class="panel">
+
+        <label for="prompt">
+            Instrucción para Atlas
+        </label>
+
+        <textarea
+            id="prompt"
+            placeholder="Ejemplo: Calculá el 18% de 1250 más 45"
+        ></textarea>
+
+        <div class="actions">
+            <button id="executeButton" onclick="executeAtlas()">
+                Ejecutar con Atlas
+            </button>
+        </div>
+
+        <div id="errorBox" class="error"></div>
+
+        <section id="resultSection" class="result-section">
+
+            <div class="result-grid">
+
+                <div class="info-card">
+                    <div class="title">Agente</div>
+                    <div id="agent" class="value">-</div>
+                </div>
+
+                <div class="info-card">
+                    <div class="title">Capacidad</div>
+                    <div id="capability" class="value">-</div>
+                </div>
+
+                <div class="info-card">
+                    <div class="title">Herramienta</div>
+                    <div id="tool" class="value">-</div>
+                </div>
+
+            </div>
+
+            <div class="output-card">
+                <h3>Resultado</h3>
+                <p id="output" class="output"></p>
+            </div>
+
+        </section>
+
+    </section>
+
+    <div class="footer">
+        Atlas AI Platform · Kernel 0.7.0 · API 1.0.0
+    </div>
+
+</main>
+
+<script>
+    async function executeAtlas() {
+        const promptElement = document.getElementById("prompt");
+        const button = document.getElementById("executeButton");
+        const resultSection = document.getElementById("resultSection");
+        const errorBox = document.getElementById("errorBox");
+
+        const prompt = promptElement.value.trim();
+
+        errorBox.style.display = "none";
+        resultSection.style.display = "none";
+
+        if (!prompt) {
+            showError("Escribí una instrucción antes de ejecutar.");
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Atlas está trabajando...";
+
+        try {
+            const response = await fetch("/execute", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prompt: prompt
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                const detail = data.detail || "La ejecución no pudo completarse.";
+                throw new Error(detail);
+            }
+
+            const result = data.result || {};
+
+            document.getElementById("agent").textContent =
+                result.agent || "No informado";
+
+            document.getElementById("capability").textContent =
+                result.capability || "No informada";
+
+            document.getElementById("tool").textContent =
+                result.selected_tool || "No informada";
+
+            document.getElementById("output").textContent =
+                result.output ||
+                JSON.stringify(result, null, 2);
+
+            resultSection.style.display = "block";
+
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = "Ejecutar con Atlas";
+        }
+    }
+
+    function showError(message) {
+        const errorBox = document.getElementById("errorBox");
+
+        errorBox.textContent = message;
+        errorBox.style.display = "block";
+    }
+
+    document
+        .getElementById("prompt")
+        .addEventListener("keydown", function(event) {
+            if (event.ctrlKey && event.key === "Enter") {
+                executeAtlas();
+            }
+        });
+</script>
+
+</body>
+</html>

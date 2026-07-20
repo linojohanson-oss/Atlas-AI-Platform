@@ -3,16 +3,13 @@ from typing import Any, Dict, List, Optional
 
 from atlas.agents import GeneralAgent, PlannerAgent
 from atlas.config.settings import AtlasSettings, settings
-from atlas.enterprise.department_runtime import DepartmentRuntime
 from atlas.kernel.agent_manager import AgentManager
 from atlas.kernel.capability_manager import CapabilityManager
 from atlas.kernel.event_bus import EventBus
 from atlas.kernel.llm_manager import LLMManager
-from atlas.kernel.organization_manager import OrganizationManager
 from atlas.kernel.registry import ComponentRegistry
 from atlas.kernel.tool_manager import ToolManager
 from atlas.llm import MockLLMProvider
-
 from atlas.memory.execution_memory import ExecutionMemory
 from atlas.tools import CalculatorTool, ExcelTool, FileInfoTool
 from atlas.utils.logger import logger
@@ -29,8 +26,8 @@ class AtlasKernel:
     """Núcleo principal de Atlas AI Platform."""
 
     def __init__(
-            self,
-            configuration: Optional[AtlasSettings] = None,
+        self,
+        configuration: Optional[AtlasSettings] = None,
     ) -> None:
         self.settings = configuration or settings
 
@@ -41,16 +38,6 @@ class AtlasKernel:
         self.llm_manager = LLMManager(self.event_bus)
         self.tool_manager = ToolManager(self.event_bus)
         self.agent_manager = AgentManager(self.event_bus)
-
-        # Enterprise Layer
-        # Enterprise Layer
-        self.organization_manager = OrganizationManager()
-
-        self.department_runtime = DepartmentRuntime(
-            organization_manager=self.organization_manager,
-            agent_manager=self.agent_manager,
-            event_bus=self.event_bus,
-        )
 
         self.execution_memory = ExecutionMemory(
             self.settings.memory_dir
@@ -84,10 +71,6 @@ class AtlasKernel:
         self._register_default_tools()
         self._register_default_capabilities()
         self._register_default_agents()
-
-        # Inicializar Enterprise Layer
-        self._initialize_organization()
-
         self._register_default_workflows()
 
         self.started = True
@@ -113,8 +96,6 @@ class AtlasKernel:
             "component_registry": self.registry,
             "event_bus": self.event_bus,
             "capability_manager": self.capability_manager,
-            "organization_manager": self.organization_manager,
-            "department_runtime": self.department_runtime,
             "llm_manager": self.llm_manager,
             "tool_manager": self.tool_manager,
             "agent_manager": self.agent_manager,
@@ -188,31 +169,6 @@ class AtlasKernel:
             self.agent_manager.count(),
         )
 
-    def _initialize_organization(self) -> None:
-        """
-        Inicializa la estructura organizacional y su runtime.
-        """
-
-        self.organization_manager.initialize()
-        self.department_runtime.start()
-
-        organization_summary = self.organization_manager.summary()
-
-        department_count = (
-            organization_summary
-            .get("organization", {})
-            .get("departments", {})
-            .get("total_departments", 0)
-        )
-
-        logger.info(
-            "Organización inicializada: %s departamentos",
-            department_count,
-        )
-        logger.info(
-            "Department Runtime iniciado: %s",
-            self.department_runtime.status.value,
-        )
     def _register_default_workflows(self) -> None:
         self.workflow_registry.register(
             WorkflowDefinition(
@@ -285,64 +241,6 @@ class AtlasKernel:
                 "selected_tool": result.get("selected_tool"),
                 "provider": result.get("provider"),
                 "model": result.get("model"),
-            },
-        )
-
-        self.event_bus.publish(
-            "memory.execution.saved",
-            memory_record,
-        )
-
-        return result
-
-    def execute_department(
-            self,
-            department_id: str,
-            task: str,
-            required_capabilities: Optional[List[str]] = None,
-            required_tools: Optional[List[str]] = None,
-            required_permissions: Optional[List[str]] = None,
-            preferred_agent_ids: Optional[List[str]] = None,
-            excluded_agent_ids: Optional[List[str]] = None,
-            metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Ejecuta una tarea mediante un departamento empresarial.
-        """
-
-        self._ensure_started()
-
-        normalized_task = task.strip()
-        if not normalized_task:
-            raise ValueError(
-                "La tarea departamental no puede estar vacía."
-            )
-
-        result = self.department_runtime.execute(
-            department_id=department_id,
-            task=normalized_task,
-            required_capabilities=required_capabilities,
-            required_tools=required_tools,
-            required_permissions=required_permissions,
-            preferred_agent_ids=preferred_agent_ids,
-            excluded_agent_ids=excluded_agent_ids,
-            metadata=metadata,
-        )
-
-        memory_record = self.execution_memory.save(
-            task=normalized_task,
-            result=result,
-            metadata={
-                "execution_type": "department",
-                "department_id": department_id,
-                "task_id": result.get("task_id"),
-                "status": result.get("status"),
-                "selected_agent": (
-                    result
-                    .get("selected_agent", {})
-                    .get("agent", {})
-                    .get("agent_id")
-                ),
             },
         )
 
@@ -486,15 +384,6 @@ class AtlasKernel:
             "registered_capabilities": self.capability_manager.count(),
             "capability_names": self.capability_manager.list_names(),
             "capabilities": self.capability_manager.list_capabilities(),
-            "organization": (
-                self.organization_manager.summary()
-                if self.organization_manager.is_ready
-                else {
-                    "status": self.organization_manager.status.value,
-                    "is_ready": False,
-                }
-            ),
-            "department_runtime": self.department_runtime.summary(),
             "registered_workflows": self.workflow_registry.count(),
             "workflow_names": self.workflow_registry.list_names(),
             "stored_workflows": self.workflow_trace.count(),
@@ -538,14 +427,6 @@ class AtlasKernel:
         )
 
         logger.info("Deteniendo Atlas AI Platform...")
-
-        self.department_runtime.stop()
-
-        logger.info(
-            "Department Runtime detenido: %s",
-            self.department_runtime.status.value,
-        )
-
         self.started = False
 
         self.event_bus.publish(
