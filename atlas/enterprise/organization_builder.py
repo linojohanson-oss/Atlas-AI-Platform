@@ -194,6 +194,9 @@ class AtlasOrganizationBuilder:
         """
         planner_metrics = AgentMetrics()
         general_metrics = AgentMetrics()
+        engineering_metrics = AgentMetrics()
+        research_metrics = AgentMetrics()
+        security_metrics = AgentMetrics()
 
         return [
             AgentProfile(
@@ -263,6 +266,114 @@ class AtlasOrganizationBuilder:
                 max_concurrent_tasks=2,
                 enabled=True,
             ),
+            AgentProfile(
+                agent_id="engineering-agent",
+                name="Engineering Agent",
+                description=(
+                    "Agente especializado en ingeniería de software, "
+                    "arquitectura, APIs, Python, testing y debugging."
+                ),
+                department="engineering",
+                role="software-engineer",
+                status=AgentStatus.IDLE,
+                level=AgentLevel.SENIOR,
+                authority=AuthorityLevel.HIGH,
+                capabilities=[
+                    "general-reasoning",
+                    "coding",
+                    "debugging",
+                ],
+                tools=[
+                    "calculator",
+                    "file-info",
+                ],
+                llm_providers=[
+                    "mock",
+                ],
+                permissions=[
+                    "execute-tasks",
+                    "use-tools",
+                    "review-code",
+                    "design-architecture",
+                    "debug-systems",
+                ],
+                metrics=engineering_metrics,
+                priority=10,
+                max_concurrent_tasks=3,
+                enabled=True,
+            ),
+            AgentProfile(
+                agent_id="research-agent",
+                name="Research Agent",
+                description=(
+                    "Agente especializado en investigación estructurada, "
+                    "análisis de información, contraste de evidencia "
+                    "y elaboración de conclusiones."
+                ),
+                department="research",
+                role="research-specialist",
+                status=AgentStatus.IDLE,
+                level=AgentLevel.SENIOR,
+                authority=AuthorityLevel.HIGH,
+                capabilities=[
+                    "general-reasoning",
+                    "research",
+                    "information-analysis",
+                ],
+                tools=[
+                    "calculator",
+                    "file-info",
+                ],
+                llm_providers=[
+                    "mock",
+                ],
+                permissions=[
+                    "execute-tasks",
+                    "use-tools",
+                    "analyze-information",
+                    "compare-sources",
+                    "produce-research-reports",
+                ],
+                metrics=research_metrics,
+                priority=15,
+                max_concurrent_tasks=3,
+                enabled=True,
+            ),
+            AgentProfile(
+                agent_id="security-agent",
+                name="Security Agent",
+                description=(
+                    "Agente especializado en seguridad, evaluación de riesgos, "
+                    "cumplimiento y análisis de vulnerabilidades."
+                ),
+                department="security",
+                role="security-specialist",
+                status=AgentStatus.IDLE,
+                level=AgentLevel.SENIOR,
+                authority=AuthorityLevel.HIGH,
+                capabilities=[
+                    "general-reasoning",
+                    "security-analysis",
+                ],
+                tools=[
+                    "calculator",
+                    "file-info",
+                ],
+                llm_providers=[
+                    "mock",
+                ],
+                permissions=[
+                    "execute-tasks",
+                    "use-tools",
+                    "security-review",
+                    "risk-analysis",
+                    "compliance-review",
+                ],
+                metrics=security_metrics,
+                priority=20,
+                max_concurrent_tasks=3,
+                enabled=True,
+            ),
         ]
 
     # ============================================================
@@ -299,6 +410,11 @@ class AtlasOrganizationBuilder:
                 agent=agent,
                 replace=self.config.replace_existing,
                 sync_capabilities=True,
+            )
+
+            organization.departments.assign_agent(
+                department_id=agent.department,
+                agent_id=agent.agent_id,
             )
 
         if self.config.validate_on_build:
@@ -386,7 +502,9 @@ class AtlasOrganizationBuilder:
         items: List[DepartmentProfile] = []
 
         if self._use_default_departments:
-            items.extend(build_default_departments())
+            items.extend(
+                build_default_departments()
+            )
 
         items.extend(self._departments)
 
@@ -399,7 +517,9 @@ class AtlasOrganizationBuilder:
         items: List[CapabilityProfile] = []
 
         if self._use_default_capabilities:
-            items.extend(build_default_capabilities())
+            items.extend(
+                build_default_capabilities()
+            )
 
         items.extend(self._capabilities)
 
@@ -412,7 +532,9 @@ class AtlasOrganizationBuilder:
         items: List[AgentProfile] = []
 
         if self._use_default_agents:
-            items.extend(self.default_agents())
+            items.extend(
+                self.default_agents()
+            )
 
         items.extend(self._agents)
 
@@ -432,7 +554,12 @@ class AtlasOrganizationBuilder:
         indexed: Dict[str, Any] = {}
 
         for item in items:
-            key = getattr(item, key_name)
+            key = getattr(
+                item,
+                key_name,
+            )
             indexed[str(key)] = item
 
-        return list(indexed.values())
+        return list(
+            indexed.values()
+        )

@@ -2,7 +2,16 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+import asyncio
+from app.api.websocket_manager import (
+    websocket_manager,
+)
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -99,13 +108,25 @@ async def lifespan(app: FastAPI):
     print("=" * 80)
 
     kernel.start()
+    event_loop = asyncio.get_running_loop()
 
+    websocket_manager.start(
+        event_bus=(
+            kernel.workflow_engine.event_bus
+        ),
+        event_loop=event_loop,
+    )
+
+    print(
+        "Atlas Studio WebSocket iniciado: "
+        f"{websocket_manager.summary()}"
+    )
     yield
 
     print("\n" + "=" * 80)
     print("DETENIENDO ATLAS AI API")
     print("=" * 80)
-
+    websocket_manager.stop()
     kernel.stop()
 
 
@@ -242,10 +263,9 @@ def execute_workflow(request: WorkflowExecuteRequest):
 
     try:
         resultado = kernel.execute_workflow(
-            prompt=prompt,
-            workflow_name=workflow_name,
+            workflow_id=workflow_name,
+            request=prompt,
         )
-
         if resultado.get("status") == "FAILED":
             raise HTTPException(
                 status_code=500,
@@ -318,5 +338,55 @@ def last_workflow():
         "success": True,
         "workflow": serializar_resultado(
             kernel.get_last_workflow()
+        ),
+    }
+@app.websocket("/ws/workflows")
+async def workflow_events_websocket(
+    websocket: WebSocket,
+):
+    """
+    Canal en tiempo real de eventos de workflows
+    para Atlas Studio.
+    """
+
+    await websocket_manager.connect(
+        websocket
+    )
+
+    try:
+        while True:
+            await websocket.receive_text()
+
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(
+            websocket
+        )
+
+    except Exception:
+        websocket_manager.disconnect(
+            websocket
+        )
+
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@app.get(
+    "/studio/status",
+    tags=["Atlas Studio"],
+    summary="Estado del canal WebSocket",
+)
+def studio_status():
+    return {
+        "success": True,
+        "websocket": (
+            websocket_manager.summary()
+        ),
+        "event_bus": (
+            kernel.workflow_engine
+            .event_bus
+            .summary()
         ),
     }

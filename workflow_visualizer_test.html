@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Atlas AI - security-api-review</title>
+    
+<style>
+    :root {
+        --background: #08111f;
+        --panel: #101c2f;
+        --panel-soft: #16243a;
+        --border: #263957;
+        --text: #edf4ff;
+        --muted: #93a7c5;
+        --accent: #4f8cff;
+        --success: #3ddc97;
+        --danger: #ff647c;
+        --warning: #f2c94c;
+        --blocked: #c084fc;
+        --neutral: #94a3b8;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background:
+            radial-gradient(
+                circle at top,
+                #142746 0%,
+                var(--background) 45%
+            );
+        color: var(--text);
+        font-family:
+            Inter,
+            Segoe UI,
+            Arial,
+            sans-serif;
+    }
+
+    .atlas-workflow-page {
+        width: min(
+            1120px,
+            calc(100% - 32px)
+        );
+        margin: 0 auto;
+        padding: 40px 0 60px;
+    }
+
+    .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .eyebrow {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        margin-bottom: 10px;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(
+            30px,
+            5vw,
+            48px
+        );
+        line-height: 1.1;
+    }
+
+    .execution-id {
+        color: var(--muted);
+        margin-top: 12px;
+        font-family:
+            Consolas,
+            monospace;
+        font-size: 13px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+
+    .status-completed {
+        background: rgba(
+            61,
+            220,
+            151,
+            0.12
+        );
+        border-color: rgba(
+            61,
+            220,
+            151,
+            0.4
+        );
+        color: var(--success);
+    }
+
+    .status-failed {
+        background: rgba(
+            255,
+            100,
+            124,
+            0.12
+        );
+        border-color: rgba(
+            255,
+            100,
+            124,
+            0.4
+        );
+        color: var(--danger);
+    }
+
+    .status-running,
+    .status-pending {
+        background: rgba(
+            242,
+            201,
+            76,
+            0.12
+        );
+        border-color: rgba(
+            242,
+            201,
+            76,
+            0.4
+        );
+        color: var(--warning);
+    }
+
+    .status-blocked {
+        background: rgba(
+            192,
+            132,
+            252,
+            0.12
+        );
+        border-color: rgba(
+            192,
+            132,
+            252,
+            0.4
+        );
+        color: var(--blocked);
+    }
+
+    .status-skipped,
+    .status-unknown {
+        background: rgba(
+            148,
+            163,
+            184,
+            0.12
+        );
+        border-color: rgba(
+            148,
+            163,
+            184,
+            0.35
+        );
+        color: var(--neutral);
+    }
+
+    .request-card,
+    .progress-section,
+    .workflow-section,
+    .final-output,
+    .errors-section {
+        background: rgba(
+            16,
+            28,
+            47,
+            0.92
+        );
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+
+    .section-label,
+    .section-title {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .request-text,
+    .final-output-text {
+        line-height: 1.7;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+    }
+
+    .metric-label {
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .metric-value {
+        font-size: 28px;
+        font-weight: 750;
+        margin: 8px 0 4px;
+    }
+
+    .metric-description {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .progress-track {
+        width: 100%;
+        height: 12px;
+        border-radius: 999px;
+        background: #091323;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+        height: 100%;
+        background:
+            linear-gradient(
+                90deg,
+                var(--accent),
+                var(--success)
+            );
+        border-radius: inherit;
+    }
+
+    .progress-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 12px;
+    }
+
+    .workflow-flow {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .workflow-step {
+        display: grid;
+        grid-template-columns:
+            48px
+            minmax(0, 1fr);
+        gap: 16px;
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+    .step-number {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent);
+        color: white;
+        border-radius: 14px;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .step-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .step-meta {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .meta-item {
+        background: rgba(
+            8,
+            17,
+            31,
+            0.55
+        );
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .meta-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    .meta-item strong {
+        font-size: 14px;
+    }
+
+    .step-output {
+        margin-top: 16px;
+        background: rgba(
+            8,
+            17,
+            31,
+            0.65
+        );
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+    }
+
+    .step-output-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .step-output-text {
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    .workflow-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--accent);
+        min-height: 52px;
+    }
+
+    .arrow-line {
+        width: 2px;
+        flex: 1;
+        background: var(--border);
+    }
+
+    .arrow-head {
+        line-height: 1;
+    }
+
+    .errors-section {
+        border-color: rgba(
+            255,
+            100,
+            124,
+            0.45
+        );
+    }
+
+    .errors-section ul {
+        margin: 0;
+        padding-left: 22px;
+        color: var(--danger);
+    }
+
+    .footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding-top: 10px;
+    }
+
+    .empty-state {
+        color: var(--muted);
+        text-align: center;
+        padding: 30px;
+    }
+
+    @media (
+        max-width: 800px
+    ) {
+        .metrics-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+        .step-meta {
+            grid-template-columns:
+                1fr;
+        }
+    }
+
+    @media (
+        max-width: 520px
+    ) {
+        .atlas-workflow-page {
+            width:
+                calc(100% - 20px);
+            padding-top: 24px;
+        }
+
+        .hero {
+            flex-direction: column;
+        }
+
+        .metrics-grid {
+            grid-template-columns:
+                1fr;
+        }
+
+        .workflow-step {
+            grid-template-columns:
+                1fr;
+        }
+
+        .step-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+</head>
+<body>
+    
+<main class="atlas-workflow-page">
+    <header class="hero">
+        <div>
+            <div class="eyebrow">
+                ATLAS AI · WORKFLOW VISUALIZER
+            </div>
+
+            <h1>
+                security-api-review
+            </h1>
+
+            <div class="execution-id">
+                Execution ID: 1ff165e0-e18b-4779-98d6-566579f5c1fd
+            </div>
+        </div>
+
+        <div class="status-badge status-completed">
+            Completado
+        </div>
+    </header>
+
+    
+            <section class="request-card">
+                <div class="section-label">
+                    Solicitud
+                </div>
+                <div class="request-text">
+                    Revisar la seguridad de una API REST con autenticación JWT.
+                </div>
+            </section>
+            
+
+    <section class="metrics-grid">
+        
+        <div class="metric-card">
+            <div class="metric-label">
+                Pasos
+            </div>
+
+            <div class="metric-value">
+                3/3
+            </div>
+
+            <div class="metric-description">
+                completados
+            </div>
+        </div>
+        
+
+        
+        <div class="metric-card">
+            <div class="metric-label">
+                Éxito
+            </div>
+
+            <div class="metric-value">
+                100.0%
+            </div>
+
+            <div class="metric-description">
+                tasa general
+            </div>
+        </div>
+        
+
+        
+        <div class="metric-card">
+            <div class="metric-label">
+                Duración
+            </div>
+
+            <div class="metric-value">
+                0.0157s
+            </div>
+
+            <div class="metric-description">
+                tiempo total
+            </div>
+        </div>
+        
+
+        
+        <div class="metric-card">
+            <div class="metric-label">
+                Errores
+            </div>
+
+            <div class="metric-value">
+                0
+            </div>
+
+            <div class="metric-description">
+                pasos fallidos
+            </div>
+        </div>
+        
+    </section>
+
+    <section class="progress-section">
+        <div class="progress-header">
+            <span>Progreso del workflow</span>
+            <strong>100.0%</strong>
+        </div>
+
+        <div class="progress-track">
+            <div
+                class="progress-fill"
+                style="width: 100.0%"
+            ></div>
+        </div>
+
+        <div class="progress-summary">
+            <span>Completados: 3</span>
+            <span>Fallidos: 0</span>
+            <span>Omitidos: 0</span>
+            <span>Bloqueados: 0</span>
+        </div>
+    </section>
+
+    <section class="workflow-section">
+        <div class="section-title">
+            Flujo de ejecución
+        </div>
+
+        <div class="workflow-flow">
+            
+        <article class="workflow-step">
+            <div class="step-number">
+                1
+            </div>
+
+            <div class="step-main">
+                <div class="step-header">
+                    <h2>security-analysis</h2>
+
+                    <span class="status-badge status-completed">
+                        Completado
+                    </span>
+                </div>
+
+                <div class="step-meta">
+                    <div class="meta-item">
+                        <span>Departamento</span>
+                        <strong>security</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Agente</span>
+                        <strong>security-agent</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Duración</span>
+                        <strong>0.000227s</strong>
+                    </div>
+                </div>
+
+                
+            <div class="step-output">
+                <div class="step-output-label">
+                    Resultado
+                </div>
+
+                <div class="step-output-text">
+                    Atlas AI completó la ejecución simulada. Solicitud analizada: SOLICITUD PRINCIPAL Resultado: análisis generado correctamente por el proveedor local de pruebas.
+                </div>
+            </div>
+            
+            </div>
+        </article>
+        
+
+                    <div class="workflow-arrow">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-head">▼</div>
+                    </div>
+                    
+
+        <article class="workflow-step">
+            <div class="step-number">
+                2
+            </div>
+
+            <div class="step-main">
+                <div class="step-header">
+                    <h2>engineering-fix</h2>
+
+                    <span class="status-badge status-completed">
+                        Completado
+                    </span>
+                </div>
+
+                <div class="step-meta">
+                    <div class="meta-item">
+                        <span>Departamento</span>
+                        <strong>engineering</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Agente</span>
+                        <strong>engineering-agent</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Duración</span>
+                        <strong>0.000250s</strong>
+                    </div>
+                </div>
+
+                
+            <div class="step-output">
+                <div class="step-output-label">
+                    Resultado
+                </div>
+
+                <div class="step-output-text">
+                    Atlas AI completó la ejecución simulada. Etapa procesada: security-analysis. Solicitud analizada: SOLICITUD PRINCIPAL Resultado: análisis generado correctamente por el proveedor local de pruebas.
+                </div>
+            </div>
+            
+            </div>
+        </article>
+        
+
+                    <div class="workflow-arrow">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-head">▼</div>
+                    </div>
+                    
+
+        <article class="workflow-step">
+            <div class="step-number">
+                3
+            </div>
+
+            <div class="step-main">
+                <div class="step-header">
+                    <h2>final-review</h2>
+
+                    <span class="status-badge status-completed">
+                        Completado
+                    </span>
+                </div>
+
+                <div class="step-meta">
+                    <div class="meta-item">
+                        <span>Departamento</span>
+                        <strong>operations</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Agente</span>
+                        <strong>general-agent</strong>
+                    </div>
+
+                    <div class="meta-item">
+                        <span>Duración</span>
+                        <strong>0.000364s</strong>
+                    </div>
+                </div>
+
+                
+            <div class="step-output">
+                <div class="step-output-label">
+                    Resultado
+                </div>
+
+                <div class="step-output-text">
+                    Atlas AI completó la ejecución simulada. Etapa procesada: security-analysis. Solicitud analizada: SOLICITUD PRINCIPAL Resultado: análisis generado correctamente por el proveedor local de pruebas.
+                </div>
+            </div>
+            
+            </div>
+        </article>
+        
+        </div>
+    </section>
+
+    
+        <section class="final-output">
+            <div class="section-label">
+                Resultado final
+            </div>
+
+            <div class="final-output-text">
+                Atlas AI completó la ejecución simulada. Etapa procesada: security-analysis. Solicitud analizada: SOLICITUD PRINCIPAL Resultado: análisis generado correctamente por el proveedor local de pruebas.
+            </div>
+        </section>
+        
+
+    
+
+    <footer class="footer">
+        Atlas AI Platform · Workflow Engine
+    </footer>
+</main>
+
+</body>
+</html>

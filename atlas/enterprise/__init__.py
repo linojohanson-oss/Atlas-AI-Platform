@@ -58,6 +58,14 @@ from atlas.enterprise.department_runtime import (
     DepartmentTaskStatus,
 )
 
+
+from atlas.enterprise.executive_agent import (
+    ExecutiveAgent,
+    ExecutiveAgentStatus,
+    ExecutiveDecision,
+)
+
+
 __all__ = [
     # Agent Profile
     "AgentLevel",
@@ -101,6 +109,9 @@ __all__ = [
     "BuilderConfig",
 
     "Department",
+    "ExecutiveAgent",
+    "ExecutiveAgentStatus",
+    "ExecutiveDecision",
 
 
 ]

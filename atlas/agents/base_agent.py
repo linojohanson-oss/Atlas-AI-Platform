@@ -12,9 +12,15 @@ class BaseAgent(ABC):
     capabilities = []
 
     @abstractmethod
-    def execute(self, task: str) -> Dict[str, Any]:
+    def execute(
+        self,
+        task: Any,
+    ) -> Dict[str, Any]:
         """
         Ejecuta una tarea y devuelve un resultado estructurado.
+
+        La tarea puede ser texto plano o una estructura compleja,
+        por ejemplo un diccionario generado por WorkflowEngine.
         """
         raise NotImplementedError
 

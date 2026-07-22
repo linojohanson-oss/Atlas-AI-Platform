@@ -20,9 +20,7 @@ if TYPE_CHECKING:
     from atlas.kernel.organization_manager import OrganizationManager
 
 
-
 class DepartmentRuntimeStatus(str, Enum):
-
     """
     Estados posibles del runtime departamental.
     """
@@ -51,9 +49,12 @@ class DepartmentTaskStatus(str, Enum):
 class DepartmentTask:
     """
     Representa una tarea gestionada por DepartmentRuntime.
+
+    La tarea puede ser texto plano o una estructura compleja,
+    por ejemplo un diccionario generado por WorkflowEngine.
     """
 
-    task: str
+    task: Any
     department_id: str
 
     task_id: str = field(
@@ -103,12 +104,9 @@ class DepartmentTask:
     error: Optional[str] = None
 
     def __post_init__(self) -> None:
-        self.task = str(self.task).strip()
-
-        if not self.task:
-            raise ValueError(
-                "La tarea departamental no puede estar vacía."
-            )
+        self.task = self._normalize_task(
+            self.task
+        )
 
         self.department_id = self._normalize_identifier(
             self.department_id
@@ -140,6 +138,10 @@ class DepartmentTask:
             self._normalize_collection(
                 self.excluded_agent_ids
             )
+        )
+
+        self.metadata = dict(
+            self.metadata or {}
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -175,7 +177,43 @@ class DepartmentTask:
         }
 
     @staticmethod
-    def _normalize_identifier(value: str) -> str:
+    def _normalize_task(
+        task: Any,
+    ) -> Any:
+        """
+        Valida la tarea sin destruir su estructura original.
+        """
+
+        if task is None:
+            raise ValueError(
+                "La tarea departamental no puede ser None."
+            )
+
+        if isinstance(task, str):
+            normalized_task = task.strip()
+
+            if not normalized_task:
+                raise ValueError(
+                    "La tarea departamental no puede estar vacía."
+                )
+
+            return normalized_task
+
+        if isinstance(task, dict):
+            if not task:
+                raise ValueError(
+                    "La tarea departamental estructurada "
+                    "no puede estar vacía."
+                )
+
+            return dict(task)
+
+        return task
+
+    @staticmethod
+    def _normalize_identifier(
+        value: str,
+    ) -> str:
         normalized = str(value).strip().lower()
         normalized = normalized.replace(" ", "-")
         normalized = normalized.replace("_", "-")
@@ -242,8 +280,8 @@ class DepartmentRuntime:
 
         for method_name in required_organization_methods:
             if not hasattr(
-                    organization_manager,
-                    method_name,
+                organization_manager,
+                method_name,
             ):
                 raise TypeError(
                     "organization_manager no implementa "
@@ -349,7 +387,7 @@ class DepartmentRuntime:
     def execute(
         self,
         department_id: str,
-        task: str,
+        task: Any,
         required_capabilities: Optional[List[str]] = None,
         required_tools: Optional[List[str]] = None,
         required_permissions: Optional[List[str]] = None,
@@ -363,6 +401,8 @@ class DepartmentRuntime:
 
         Selecciona automáticamente el mejor agente empresarial y luego
         delega la ejecución al AgentManager del Kernel.
+
+        La tarea puede ser texto plano o una estructura compleja.
         """
 
         self._ensure_ready()
@@ -413,13 +453,16 @@ class DepartmentRuntime:
             department_task.selected_agent_id = (
                 selected_agent.agent_id
             )
+
             department_task.selection_score = round(
                 selection.score,
                 4,
             )
+
             department_task.status = (
                 DepartmentTaskStatus.RUNNING
             )
+
             department_task.started_at = (
                 datetime.now().isoformat()
             )
@@ -431,7 +474,9 @@ class DepartmentRuntime:
                     "department_id": department.department_id,
                     "agent_id": selected_agent.agent_id,
                     "selection_score": selection.score,
-                    "task": department_task.task,
+                    "task": self._task_summary(
+                        department_task.task
+                    ),
                 },
             )
 
@@ -477,10 +522,12 @@ class DepartmentRuntime:
             )
 
             department_task.result = execution_result
+
             department_task.duration_seconds = round(
                 duration_seconds,
                 6,
             )
+
             department_task.finished_at = (
                 datetime.now().isoformat()
             )
@@ -490,6 +537,7 @@ class DepartmentRuntime:
                 "task_id": department_task.task_id,
                 "status": department_task.status.value,
                 "department": department.to_dict(),
+                "agent_id": selected_agent.agent_id,
                 "selected_agent": selection.to_dict(),
                 "execution": execution_result,
                 "duration_seconds": (
@@ -523,11 +571,14 @@ class DepartmentRuntime:
             department_task.status = (
                 DepartmentTaskStatus.FAILED
             )
+
             department_task.error = str(error)
+
             department_task.duration_seconds = round(
                 duration_seconds,
                 6,
             )
+
             department_task.finished_at = (
                 datetime.now().isoformat()
             )
@@ -888,6 +939,46 @@ class DepartmentRuntime:
             event_name,
             payload,
         )
+
+    @staticmethod
+    def _task_summary(
+        task: Any,
+    ) -> Dict[str, Any]:
+        """
+        Genera una representación compacta de la tarea
+        para eventos y registros operativos.
+        """
+
+        if isinstance(task, dict):
+            previous_results = task.get(
+                "previous_results",
+                {},
+            )
+
+            dependency_ids = (
+                list(previous_results.keys())
+                if isinstance(previous_results, dict)
+                else []
+            )
+
+            return {
+                "type": "structured-task",
+                "workflow_id": task.get(
+                    "workflow_id"
+                ),
+                "step_id": task.get(
+                    "step_id"
+                ),
+                "request": str(
+                    task.get("request", "")
+                )[:500],
+                "dependency_ids": dependency_ids,
+            }
+
+        return {
+            "type": "text-task",
+            "content": str(task)[:500],
+        }
 
     @staticmethod
     def _is_successful_result(

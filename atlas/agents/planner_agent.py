@@ -59,7 +59,18 @@ class PlannerAgent(BaseAgent):
         """
         Ejecuta el ciclo completo de planificación.
         """
-        normalized_task = task.strip()
+        if isinstance(task, dict):
+            task_value = (
+                    task.get("request")
+                    or task.get("prompt")
+                    or task.get("task")
+                    or task.get("input")
+                    or ""
+            )
+        else:
+            task_value = task
+
+        normalized_task = str(task_value).strip()
 
         if not normalized_task:
             raise ValueError(
