@@ -1,18 +1,18 @@
-"""
+﻿"""
 Atlas AI Platform - Kernel
 
-Núcleo principal de la plataforma Atlas AI.
+NÃºcleo principal de la plataforma Atlas AI.
 
 El Kernel coordina:
 
-- Configuración.
+- ConfiguraciÃ³n.
 - Registro de componentes.
 - Event Bus.
 - Proveedores LLM.
 - Herramientas.
 - Capacidades.
 - Agentes.
-- Organización empresarial.
+- OrganizaciÃ³n empresarial.
 - Departamentos.
 - Executive Agent.
 - Workflows.
@@ -53,6 +53,7 @@ from atlas.kernel.organization_manager import (
 from atlas.kernel.registry import ComponentRegistry
 from atlas.kernel.tool_manager import ToolManager
 from atlas.llm import MockLLMProvider
+from atlas.llm.ollama_provider import OllamaLLMProvider
 from atlas.memory.execution_memory import (
     ExecutionMemory,
 )
@@ -72,7 +73,7 @@ from atlas.workflows import (
 
 class AtlasKernel:
     """
-    Núcleo principal de Atlas AI Platform.
+    NÃºcleo principal de Atlas AI Platform.
 
     AtlasKernel inicializa y coordina todos los componentes
     centrales de la plataforma.
@@ -193,7 +194,7 @@ class AtlasKernel:
 
         if self.started:
             logger.warning(
-                "Atlas Kernel ya está iniciado."
+                "Atlas Kernel ya estÃ¡ iniciado."
             )
             return
 
@@ -240,7 +241,7 @@ class AtlasKernel:
 
             logger.info(
                 "Atlas Kernel iniciado "
-                "correctamente. Versión %s",
+                "correctamente. VersiÃ³n %s",
                 self.settings.version,
             )
 
@@ -261,7 +262,7 @@ class AtlasKernel:
 
         if not self.started:
             logger.warning(
-                "Atlas Kernel no está iniciado."
+                "Atlas Kernel no estÃ¡ iniciado."
             )
             return
 
@@ -435,6 +436,11 @@ class AtlasKernel:
 
         self.llm_manager.register(
             MockLLMProvider(),
+            make_default=False,
+        )
+
+        self.llm_manager.register(
+            OllamaLLMProvider(),
             make_default=True,
         )
 
@@ -548,7 +554,7 @@ class AtlasKernel:
         self,
     ) -> None:
         """
-        Inicializa la organización empresarial.
+        Inicializa la organizaciÃ³n empresarial.
         """
 
         self.organization_manager.initialize()
@@ -567,7 +573,7 @@ class AtlasKernel:
         )
 
         logger.info(
-            "Organización inicializada: "
+            "OrganizaciÃ³n inicializada: "
             "%s departamentos",
             department_count,
         )
@@ -602,9 +608,9 @@ class AtlasKernel:
                     "Enterprise AI Solution"
                 ),
                 description=(
-                    "Analiza, investiga, diseña, "
+                    "Analiza, investiga, diseÃ±a, "
                     "implementa conceptualmente y "
-                    "revisa una solución empresarial "
+                    "revisa una soluciÃ³n empresarial "
                     "de inteligencia artificial."
                 ),
                 tags=[
@@ -667,8 +673,8 @@ class AtlasKernel:
                 name="Security API Review",
                 description=(
                     "Analiza la seguridad de una API, "
-                    "propone correcciones técnicas y "
-                    "consolida una revisión final."
+                    "propone correcciones tÃ©cnicas y "
+                    "consolida una revisiÃ³n final."
                 ),
                 tags=[
                     "security",
@@ -739,7 +745,7 @@ class AtlasKernel:
         )
 
     # ============================================================
-    # Ejecución de agentes
+    # EjecuciÃ³n de agentes
     # ============================================================
 
     def execute(
@@ -759,7 +765,7 @@ class AtlasKernel:
 
         if not normalized_task:
             raise ValueError(
-                "La tarea no puede estar vacía."
+                "La tarea no puede estar vacÃ­a."
             )
 
         result = self.agent_manager.execute(
@@ -794,7 +800,7 @@ class AtlasKernel:
         return result
 
     # ============================================================
-    # Ejecución ejecutiva
+    # EjecuciÃ³n ejecutiva
     # ============================================================
 
     def execute_executive(
@@ -835,7 +841,7 @@ class AtlasKernel:
         if not normalized_task:
             raise ValueError(
                 "La tarea ejecutiva "
-                "no puede estar vacía."
+                "no puede estar vacÃ­a."
             )
 
         result = self.executive_agent.execute(
@@ -892,7 +898,7 @@ class AtlasKernel:
         return result
 
     # ============================================================
-    # Ejecución departamental
+    # EjecuciÃ³n departamental
     # ============================================================
 
     def execute_department(
@@ -934,13 +940,13 @@ class AtlasKernel:
 
         if not normalized_department_id:
             raise ValueError(
-                "department_id no puede estar vacío."
+                "department_id no puede estar vacÃ­o."
             )
 
         if not normalized_task:
             raise ValueError(
                 "La tarea departamental "
-                "no puede estar vacía."
+                "no puede estar vacÃ­a."
             )
 
         result = self.department_runtime.execute(
@@ -997,7 +1003,7 @@ class AtlasKernel:
         return result
 
     # ============================================================
-    # Ejecución de workflows
+    # EjecuciÃ³n de workflows
     # ============================================================
 
     def execute_workflow(
@@ -1034,13 +1040,13 @@ class AtlasKernel:
 
         if not normalized_workflow_id:
             raise ValueError(
-                "workflow_id no puede estar vacío."
+                "workflow_id no puede estar vacÃ­o."
             )
 
         if not normalized_request:
             raise ValueError(
                 "La solicitud del workflow "
-                "no puede estar vacía."
+                "no puede estar vacÃ­a."
             )
 
         workflow_result = (
@@ -1118,7 +1124,7 @@ class AtlasKernel:
         if not normalized_tool_name:
             raise ValueError(
                 "El nombre de la herramienta "
-                "no puede estar vacío."
+                "no puede estar vacÃ­o."
             )
 
         result = self.tool_manager.execute(
@@ -1162,7 +1168,7 @@ class AtlasKernel:
         if not normalized_capability:
             raise ValueError(
                 "El nombre de la capacidad "
-                "no puede estar vacío."
+                "no puede estar vacÃ­o."
             )
 
         tool_name = (
@@ -1210,7 +1216,7 @@ class AtlasKernel:
         event_type: str,
     ) -> Dict[str, Any]:
         """
-        Guarda una ejecución y publica el evento.
+        Guarda una ejecuciÃ³n y publica el evento.
         """
 
         memory_record = (
@@ -1246,7 +1252,7 @@ class AtlasKernel:
         self,
     ) -> Optional[Dict[str, Any]]:
         """
-        Obtiene la última ejecución.
+        Obtiene la Ãºltima ejecuciÃ³n.
         """
 
         return self.execution_memory.get_last()
@@ -1256,7 +1262,7 @@ class AtlasKernel:
         execution_id: str,
     ) -> Dict[str, Any]:
         """
-        Obtiene una ejecución del WorkflowEngine.
+        Obtiene una ejecuciÃ³n del WorkflowEngine.
         """
 
         self._ensure_started()
@@ -1411,7 +1417,7 @@ class AtlasKernel:
 
     def _ensure_started(self) -> None:
         """
-        Verifica que Atlas Kernel esté iniciado.
+        Verifica que Atlas Kernel estÃ© iniciado.
         """
 
         if not self.started:
@@ -1428,3 +1434,4 @@ class AtlasKernel:
             f"workflows={self.workflow_registry.count}"
             ")"
         )
+

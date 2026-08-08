@@ -21,11 +21,19 @@ def on_agent_completed(payload) -> None:
     print()
     print("TAREA COMPLETADA POR AGENTE")
     print("-" * 76)
-    print(f"Agente                  : {payload['agent']}")
-    print(f"Estado                  : {payload['status']}")
-    print(f"Proveedor               : {payload['provider']}")
-    print(f"Modelo                  : {payload['model']}")
-    print(f"Resultado               : {payload['output']}")
+    print(f"Agente                  : {payload.get('agent')}")
+    print(f"Estado                  : {payload.get('status')}")
+    print(f"Proveedor               : {payload.get('provider')}")
+    print(f"Modelo                  : {payload.get('model')}")
+
+    output = (
+        payload.get("output")
+        or payload.get("result")
+        or payload.get("response")
+        or payload
+    )
+
+    print(f"Resultado               : {output}")
 
 
 def on_tool_completed(payload) -> None:

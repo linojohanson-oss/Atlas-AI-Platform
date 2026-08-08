@@ -1,0 +1,983 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <meta
+        name="description"
+        content="Atlas AI Studio - Centro de control para agentes, workflows y operaciones de Atlas AI."
+    >
+
+    <title>Atlas AI Studio</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/studio.css"
+    >
+</head>
+
+<body>
+
+<div
+    id="atlas-studio"
+    class="studio-shell"
+>
+
+    <!-- ===================================================== -->
+    <!-- SIDEBAR -->
+    <!-- ===================================================== -->
+
+    <aside
+        class="studio-sidebar"
+        aria-label="NavegaciÃ³n principal"
+    >
+
+        <div class="brand">
+
+            <div
+                class="brand-mark"
+                aria-hidden="true"
+            >
+                A
+            </div>
+
+            <div class="brand-copy">
+
+                <strong>ATLAS</strong>
+
+                <span>AI Studio</span>
+
+            </div>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <button
+                class="nav-item active"
+                type="button"
+                data-section="dashboard"
+            >
+                <span class="nav-icon">âŒ‚</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="organizations"
+            >
+                <span class="nav-icon">â–¦</span>
+                <span>Organizations</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="departments"
+            >
+                <span class="nav-icon">â–¥</span>
+                <span>Departments</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="agents"
+            >
+                <span class="nav-icon">â—‰</span>
+                <span>Agents</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="workflows"
+            >
+                <span class="nav-icon">â‡„</span>
+                <span>Workflows</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="memory"
+            >
+                <span class="nav-icon">â—‡</span>
+                <span>Memory</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="monitoring"
+            >
+                <span class="nav-icon">âŒ</span>
+                <span>Monitoring</span>
+            </button>
+
+            <button
+                class="nav-item"
+                type="button"
+                data-section="settings"
+            >
+                <span class="nav-icon">âš™</span>
+                <span>Settings</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="sidebar-status">
+
+                <span
+                    id="sidebar-status-dot"
+                    class="status-dot status-ready"
+                ></span>
+
+                <div>
+                    <strong id="sidebar-kernel-status">
+                        Kernel READY
+                    </strong>
+
+                    <span id="sidebar-version">
+                        Atlas 0.7.0
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- ===================================================== -->
+    <!-- MAIN AREA -->
+    <!-- ===================================================== -->
+
+    <main class="studio-main">
+
+        <!-- ================================================= -->
+        <!-- TOPBAR -->
+        <!-- ================================================= -->
+
+        <header class="studio-topbar">
+
+            <div class="topbar-title">
+
+                <p class="eyebrow">
+                    Atlas AI Platform
+                </p>
+
+                <h1 id="page-title">
+                    Studio Dashboard
+                </h1>
+
+            </div>
+
+            <div class="topbar-actions">
+
+                <div
+                    class="connection-badge"
+                    id="connection-badge"
+                >
+                    <span
+                        class="status-dot status-ready"
+                        id="connection-dot"
+                    ></span>
+
+                    <span id="connection-label">
+                        Connected
+                    </span>
+                </div>
+
+                <button
+                    class="button button-secondary"
+                    id="refresh-studio"
+                    type="button"
+                >
+                    Refresh
+                </button>
+
+                <button
+                    class="button button-primary"
+                    id="run-workflow"
+                    type="button"
+                >
+                    Run workflow
+                </button>
+
+            </div>
+
+        </header>
+
+        <!-- ================================================= -->
+        <!-- DASHBOARD VIEW -->
+        <!-- ================================================= -->
+
+        <section
+            class="studio-view active"
+            id="view-dashboard"
+            data-view="dashboard"
+        >
+
+            <!-- METRICS -->
+
+            <section
+                class="metric-grid"
+                aria-label="MÃ©tricas generales"
+            >
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Organizations
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-organizations"
+                    >
+                        1
+                    </strong>
+
+                    <span class="metric-note">
+                        Active enterprise
+                    </span>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Departments
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-departments"
+                    >
+                        8
+                    </strong>
+
+                    <span class="metric-note">
+                        Runtime ready
+                    </span>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Agents
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-agents"
+                    >
+                        5
+                    </strong>
+
+                    <span class="metric-note">
+                        Registered agents
+                    </span>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Workflows
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-workflows"
+                    >
+                        2
+                    </strong>
+
+                    <span class="metric-note">
+                        Available workflows
+                    </span>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Running
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-running"
+                    >
+                        0
+                    </strong>
+
+                    <span class="metric-note">
+                        Live executions
+                    </span>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span class="metric-label">
+                        Errors
+                    </span>
+
+                    <strong
+                        class="metric-value"
+                        id="metric-errors"
+                    >
+                        0
+                    </strong>
+
+                    <span class="metric-note">
+                        System healthy
+                    </span>
+
+                </article>
+
+            </section>
+
+            <!-- MAIN WORKSPACE -->
+
+            <section class="workspace-grid">
+
+                <!-- WORKFLOW CANVAS -->
+
+                <article class="panel workflow-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                Orchestration
+                            </p>
+
+                            <h2>
+                                Workflow Execution
+                            </h2>
+                        </div>
+
+                        <div class="panel-actions">
+
+                            <button
+                                class="icon-button"
+                                id="workflow-zoom-out"
+                                type="button"
+                                aria-label="Alejar workflow"
+                            >
+                                âˆ’
+                            </button>
+
+                            <button
+                                class="icon-button"
+                                id="workflow-reset"
+                                type="button"
+                                aria-label="Restablecer workflow"
+                            >
+                                âŸ³
+                            </button>
+
+                            <button
+                                class="icon-button"
+                                id="workflow-zoom-in"
+                                type="button"
+                                aria-label="Acercar workflow"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </header>
+
+                    <div
+                        class="workflow-canvas"
+                        id="workflow-canvas"
+                    >
+
+                        <svg
+                            class="workflow-lines"
+                            viewBox="0 0 1000 520"
+                            preserveAspectRatio="none"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M500 88 L500 156"
+                                class="workflow-edge"
+                            />
+
+                            <path
+                                d="M500 156 C500 190 270 190 270 232"
+                                class="workflow-edge"
+                            />
+
+                            <path
+                                d="M500 156 C500 190 730 190 730 232"
+                                class="workflow-edge"
+                            />
+
+                            <path
+                                d="M270 310 C270 350 500 350 500 382"
+                                class="workflow-edge"
+                            />
+
+                            <path
+                                d="M730 310 C730 350 500 350 500 382"
+                                class="workflow-edge"
+                            />
+
+                            <path
+                                d="M500 442 L500 488"
+                                class="workflow-edge"
+                            />
+                        </svg>
+
+                        <button
+                            class="workflow-node node-executive active"
+                            type="button"
+                            data-agent="Executive Agent"
+                            style="--x: 50%; --y: 12%;"
+                        >
+                            <span class="node-icon">E</span>
+
+                            <span class="node-copy">
+                                <strong>Executive</strong>
+                                <small>READY</small>
+                            </span>
+                        </button>
+
+                        <button
+                            class="workflow-node"
+                            type="button"
+                            data-agent="Research Agent"
+                            style="--x: 27%; --y: 48%;"
+                        >
+                            <span class="node-icon">R</span>
+
+                            <span class="node-copy">
+                                <strong>Research</strong>
+                                <small>IDLE</small>
+                            </span>
+                        </button>
+
+                        <button
+                            class="workflow-node"
+                            type="button"
+                            data-agent="Engineering Agent"
+                            style="--x: 73%; --y: 48%;"
+                        >
+                            <span class="node-icon">G</span>
+
+                            <span class="node-copy">
+                                <strong>Engineering</strong>
+                                <small>IDLE</small>
+                            </span>
+                        </button>
+
+                        <button
+                            class="workflow-node"
+                            type="button"
+                            data-agent="Review Agent"
+                            style="--x: 50%; --y: 79%;"
+                        >
+                            <span class="node-icon">V</span>
+
+                            <span class="node-copy">
+                                <strong>Review</strong>
+                                <small>IDLE</small>
+                            </span>
+                        </button>
+
+                        <button
+                            class="workflow-node node-output"
+                            type="button"
+                            data-agent="Final Output"
+                            style="--x: 50%; --y: 94%;"
+                        >
+                            <span class="node-icon">âœ“</span>
+
+                            <span class="node-copy">
+                                <strong>Output</strong>
+                                <small>WAITING</small>
+                            </span>
+                        </button>
+
+                    </div>
+
+                </article>
+
+                <!-- INSPECTOR -->
+
+                <aside class="panel inspector-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                Inspector
+                            </p>
+
+                            <h2 id="inspector-title">
+                                Executive Agent
+                            </h2>
+                        </div>
+
+                        <span
+                            class="state-pill state-ready"
+                            id="inspector-state"
+                        >
+                            READY
+                        </span>
+
+                    </header>
+
+                    <div class="agent-profile">
+
+                        <div class="agent-avatar">
+                            E
+                        </div>
+
+                        <div>
+                            <strong id="inspector-name">
+                                Executive Agent
+                            </strong>
+
+                            <span id="inspector-role">
+                                Enterprise orchestration
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <dl class="property-list">
+
+                        <div>
+                            <dt>Department</dt>
+                            <dd id="inspector-department">
+                                Executive
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Model</dt>
+                            <dd id="inspector-model">
+                                Default provider
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Capabilities</dt>
+                            <dd id="inspector-capabilities">
+                                Planning, orchestration, delegation
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Last execution</dt>
+                            <dd id="inspector-last-run">
+                                No executions
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Duration</dt>
+                            <dd id="inspector-duration">
+                                0.00 s
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Events</dt>
+                            <dd id="inspector-events">
+                                0
+                            </dd>
+                        </div>
+
+                    </dl>
+
+                  <div class="inspector-output">
+                      <p class="panel-eyebrow">
+                          Output
+                      </p>
+
+                      <pre id="inspector-output">No output available.</pre>
+                  </div>
+
+                  <button
+                      class="button button-secondary button-block"
+                      id="open-agent-details"
+                        type="button"
+                    >
+                        Open agent details
+                    </button>
+
+                </aside>
+
+            </section>
+
+            <!-- LOWER GRID -->
+
+            <section class="lower-grid">
+
+                <!-- LIVE CONSOLE -->
+
+                <article class="panel console-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                Runtime
+                            </p>
+
+                            <h2>
+                                Live Console
+                            </h2>
+                        </div>
+
+                        <button
+                            class="text-button"
+                            id="clear-console"
+                            type="button"
+                        >
+                            Clear
+                        </button>
+
+                    </header>
+
+                    <div
+                        class="console-output"
+                        id="console-output"
+                        role="log"
+                        aria-live="polite"
+                    >
+
+                        <div class="console-line">
+
+                            <time>13:02:14</time>
+
+                            <span class="console-level info">
+                                INFO
+                            </span>
+
+                            <span>
+                                Atlas Kernel started successfully.
+                            </span>
+
+                        </div>
+
+                        <div class="console-line">
+
+                            <time>13:02:14</time>
+
+                            <span class="console-level success">
+                                READY
+                            </span>
+
+                            <span>
+                                Workflow Engine and WebSocket channel available.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+                <!-- TIMELINE -->
+
+                <article class="panel timeline-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                Execution
+                            </p>
+
+                            <h2>
+                                Timeline
+                            </h2>
+                        </div>
+
+                        <span
+                            class="timeline-duration"
+                            id="timeline-duration"
+                        >
+                            0.00 s
+                        </span>
+
+                    </header>
+
+                    <div
+                        class="timeline-list"
+                        id="timeline-list"
+                    >
+
+                        <div class="timeline-row">
+
+                            <span>Executive</span>
+
+                            <div class="timeline-track">
+
+                                <div
+                                    class="timeline-bar"
+                                    style="width: 18%;"
+                                ></div>
+
+                            </div>
+
+                            <time>ready</time>
+
+                        </div>
+
+                        <div class="timeline-row">
+
+                            <span>Research</span>
+
+                            <div class="timeline-track"></div>
+
+                            <time>waiting</time>
+
+                        </div>
+
+                        <div class="timeline-row">
+
+                            <span>Engineering</span>
+
+                            <div class="timeline-track"></div>
+
+                            <time>waiting</time>
+
+                        </div>
+
+                        <div class="timeline-row">
+
+                            <span>Review</span>
+
+                            <div class="timeline-track"></div>
+
+                            <time>waiting</time>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+        </section>
+
+        <!-- ================================================= -->
+        <!-- GENERIC PLACEHOLDER VIEWS -->
+        <!-- ================================================= -->
+
+        <section
+            class="studio-view"
+            id="view-organizations"
+            data-view="organizations"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Enterprise</p>
+                <h2>Organizations</h2>
+                <p>
+                    Organization management will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-departments"
+            data-view="departments"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Enterprise</p>
+                <h2>Departments</h2>
+                <p>
+                    Department runtime and organizational structure will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-agents"
+            data-view="agents"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Intelligence</p>
+                <h2>Agents</h2>
+                <p>
+                    Agent registry, capabilities and states will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-workflows"
+            data-view="workflows"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Orchestration</p>
+                <h2>Workflows</h2>
+                <p>
+                    Workflow builder and execution history will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-memory"
+            data-view="memory"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Knowledge</p>
+                <h2>Memory</h2>
+                <p>
+                    Persistent memory, context and knowledge stores will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-monitoring"
+            data-view="monitoring"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Observability</p>
+                <h2>Monitoring</h2>
+                <p>
+                    Live metrics, events and system health will appear here.
+                </p>
+            </article>
+        </section>
+
+        <section
+            class="studio-view"
+            id="view-settings"
+            data-view="settings"
+        >
+            <article class="panel placeholder-panel">
+                <p class="panel-eyebrow">Configuration</p>
+                <h2>Settings</h2>
+                <p>
+                    Providers, runtime configuration and preferences will appear here.
+                </p>
+            </article>
+        </section>
+
+    </main>
+
+</div>
+
+<section
+    class="modal-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="workflow-modal-title"
+>
+
+    <header class="modal-header">
+
+        <div>
+            <p class="panel-eyebrow">
+                New execution
+            </p>
+
+            <h2 id="workflow-modal-title">
+                Run Atlas Workflow
+            </h2>
+        </div>
+
+        <button
+            class="icon-button"
+            id="close-workflow-modal"
+            type="button"
+            aria-label="Cerrar"
+        >
+            Ã—
+        </button>
+
+    </header>
+
+    <form id="workflow-form">
+
+        <label class="form-field">
+
+            <span>Workflow</span>
+
+            <select id="workflow-name" name="workflow">
+                <option value="enterprise-ai-solution">
+                    Enterprise AI Solution
+                </option>
+
+                <option value="security-api-review">
+                    Security API Review
+                </option>
+            </select>
+
+        </label>
+
+        <label class="form-field">
+
+            <span>Objective</span>
+
+            <textarea
+                id="workflow-prompt"
+                name="prompt"
+                rows="7"
+                maxlength="20000"
+                placeholder="Describe el objetivo que Atlas debe resolver..."
+                required
+            ></textarea>
+
+        </label>
+
+        <div class="modal-actions">
+
+            <button
+                class="button button-secondary"
+                id="cancel-workflow"
+                type="button"
+            >
+                Cancel
+            </button>
+
+<button
+    class="button button-primary"
+    id="execute-workflow"
+    type="button"
+>
+    Execute
+</button>
+
+        </div>
+
+    </form>
+    </section>
+
+</div>
+
+<script src="/js/studio.js"></script>
+
+</body>
+</html>
+
+
+
