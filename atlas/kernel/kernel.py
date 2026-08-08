@@ -1,4 +1,4 @@
-﻿"""
+"""
 Atlas AI Platform - Kernel
 
 NÃºcleo principal de la plataforma Atlas AI.
@@ -61,6 +61,7 @@ from atlas.tools import (
     CalculatorTool,
     ExcelTool,
     FileInfoTool,
+    WebResearchTool,
 )
 from atlas.utils.logger import logger
 from atlas.workflows import (
@@ -468,6 +469,10 @@ class AtlasKernel:
             ExcelTool()
         )
 
+        self.tool_manager.register(
+            WebResearchTool()
+        )
+
         logger.info(
             "Herramientas registradas: %s",
             self.tool_manager.count(),
@@ -493,6 +498,11 @@ class AtlasKernel:
         self.capability_manager.register(
             "spreadsheet",
             "excel",
+        )
+
+        self.capability_manager.register(
+            "web_research",
+            "web-research",
         )
 
         logger.info(
@@ -531,7 +541,8 @@ class AtlasKernel:
 
         self.agent_manager.register(
             ResearchAgent(
-                self.llm_manager
+                llm_manager=self.llm_manager,
+                tool_manager=self.tool_manager,
             )
         )
 
